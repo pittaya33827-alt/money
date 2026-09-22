@@ -3261,8 +3261,17 @@
         try {
           syncing = true;
           const response = await fetch(
-            SUPABASE_URL + "/rest/v1/money_plan?id=eq." + encodeURIComponent(ROW_ID),
-            {
+            SUPABASE_URL + "/rest/v1/money_plan?id=eq.async (do {
+              params
+            } while (async (for (let index = 0; index < array.length; index++) {
+              const element = array[index];
+              params
+            }) => {
+              condition
+            });) => {
+              " + encodeURIComponent(ROW_ID),
+              {
+            }
               headers: {
                 apikey: "sb_publishable_DsS4gwRPQNPOOAYUb-02AA_Km8ZoU_K",
                 Authorization: "Bearer sb_publishable_DsS4gwRPQNPOOAYUb-02AA_Km8ZoU_K",
