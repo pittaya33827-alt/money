@@ -2216,14 +2216,6 @@
             .join("");
         }
         h +=
-          '<div class="card"><div class="h2">ส่งออก CSV (บันทึก)</div><div class="tiny" style="margin-bottom:10px">ข้อมูลใช้จริงและแผนของเดือนที่เลือก</div>' +
-          '<textarea class="inp" rows="6" readonly style="padding:10px 12px;resize:vertical;min-height:150px;font-size:12px">' +
-          esc(buildLogCsv().slice(0, 4000)) +
-          '</textarea>' +
-          '<button class="btn block" style="margin-top:12px" data-act="downloadLogCsv">' +
-          ic("receipt", 18) +
-          "ดาวน์โหลด CSV</button></div>";
-        h +=
           '<div class="card"><div class="h2">เทียบแผนกับใช้จริง</div>' +
           list +
           "</div>";
@@ -2407,72 +2399,8 @@
         "</span>" +
         i +
         "</label>";
-      function csvEscape(value) {
-        const s = value == null ? "" : String(value);
-        if (/[",\n]/.test(s)) {
-          return '"' + s.replace(/"/g, '""') + '"';
-        }
-        return s;
-      }
-      function buildMoneyPlanCsv() {
-        const rows = [
-          [
-            "type",
-            "name",
-            "date",
-            "amount",
-            "person",
-            "kind",
-            "notes",
-          ],
-        ];
-
-        S.recurring.forEach((r) => {
-          rows.push(["recurring", r.name, "", r.amount, "", "", ""]);
-        });
-
-        S.oneOffs.forEach((o) => {
-          rows.push(["oneoff", o.name, o.date, o.amount, "", o.kind, ""]);
-        });
-
-        S.debts.forEach((db) => {
-          db.borrows.forEach((x) => {
-            rows.push(["borrow", db.person, x.date, x.amount, db.person, "borrow", ""]);
-          });
-          db.repays.forEach((x) => {
-            rows.push(["repay", db.person, x.date, x.amount, db.person, "repay", ""]);
-          });
-        });
-
-        Object.entries(S.incomes).forEach(([date, amount]) => {
-          rows.push(["income", "รับเงิน", date, amount, "", "", ""]);
-        });
-
-        Object.entries(S.actuals).forEach(([date, amount]) => {
-          rows.push(["actual", "ใช้งานจริง", date, amount, "", "", ""]);
-        });
-
-        return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
-      }
-      function buildLogCsv() {
-        const rows = [["date", "day", "budget", "actual", "diff", "events"]];
-        const items = M.days.filter((d) => d.date.startsWith(ui.logMonth));
-        items.forEach((d) => {
-          const ev = (d.ev || []).map((e) => e.label + "=" + (e.amount || 0)).join(" | ");
-          rows.push([
-            d.date,
-            WS[dow(d.date)],
-            d.budget,
-            d.actual ? d.spend : "",
-            d.actual ? d.spend - d.budget : "",
-            ev,
-          ]);
-        });
-        return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
-      }
       function vSet() {
         let h = "";
-        const csvSample = buildMoneyPlanCsv();
         h +=
           '<div class="card"><div class="h2">เงินสดตั้งต้น</div>' +
           fld(
@@ -2742,14 +2670,6 @@
           '</div><button class="btn" data-act="addDebt">' +
           ic("plus", 18) +
           "เพิ่ม</button></div></div></div></div>";
-        h +=
-          '<div class="card"><div class="h2">ส่งออกข้อมูล CSV</div><div class="tiny" style="margin-bottom:12px">พิมพ์ข้อมูลแผนการเงินเป็นตาราง CSV ที่สามารถเปิดใน Excel หรือ Google Sheet ได้ทันที</div>' +
-          '<textarea class="inp" rows="6" readonly style="padding:10px 12px;resize:vertical;min-height:150px;font-size:12px">' +
-          esc(csvSample.slice(0, 4000)) +
-          '</textarea>' +
-          '<button class="btn block" style="margin-top:12px" data-act="downloadCsv">' +
-          ic("receipt", 18) +
-          "ดาวน์โหลด CSV</button></div>";
         h +=
           '<div class="card"><div class="h2">ข้อมูลในเครื่อง</div><div class="tiny" style="margin-bottom:12px">ข้อมูลทั้งหมดเก็บในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น</div>' +
           '<button class="btn bad block" data-act="reset">' +
@@ -3039,32 +2959,6 @@
           commit();
           toast("ลบรายการแล้ว");
         },
-        downloadCsv() {
-          const csv = buildMoneyPlanCsv();
-          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "money-plan.csv";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          toast("ดาวน์โหลด CSV แล้ว");
-        },
-        downloadLogCsv() {
-          const csv = buildLogCsv();
-          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "money-log.csv";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          toast("ดาวน์โหลด CSV บันทึกแล้ว");
-        },
         reset() {
           if (!ui.arm) {
             ui.arm = true;
@@ -3205,102 +3099,18 @@
 
       (function init() {
         const th = store.get(TKEY);
-        if (th === "dark" || th == ["light"])
+        if (th === "dark" || th === "light") {
           document.documentElement.dataset.theme = th;
+        }
         render();
-      })();
-      /* ========== ซิงก์กับ Supabase ========== */
-      const SUPABASE_URL = "https://mmsitxzplollkvujbjsk.supabase.co";
-      const EDGE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/sync-money-plan";
-      const ROW_ID = "0956640980zaZX";
 
-      let pushT, syncing = false;
-
-      async function cloudPush() {
-        try {
-          clearTimeout(pushT);
-          pushT = setTimeout(async () => {
-            syncing = true;
-            const response = await fetch(EDGE_FUNCTION_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: ROW_ID,
-                data: S,
-              }),
-            });
-
-            const result = await response.json().catch(() => ({}));
-            syncing = false;
-
-            if (!response.ok) {
-              throw new Error(result.error || "Sync failed");
-            }
-          }, 900);
-        } catch (error) {
-          syncing = false;
-          toast("ซิงก์ไม่สำเร็จ: " + (error && error.message ? error.message : "unknown"));
-        }
-      }
-
-      async function cloudPull() {
-        try {
-          syncing = true;
-          const response = await fetch(
-            SUPABASE_URL + "/rest/v1/money_plan?id=eq." + encodeURIComponent(ROW_ID),
-            {
-              headers: {
-                apikey: "sb_publishable_DsS4gwRPQNPOOAYUb-02AA_Km8ZoU_K",
-                Authorization: "Bearer sb_publishable_DsS4gwRPQNPOOAYUb-02AA_Km8ZoU_K",
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error("Fetch failed");
-          }
-
-          const rows = await response.json();
-          syncing = false;
-
-          if (!rows || !rows.length) {
-            cloudPush();
-            return;
-          }
-
-          const remote = rows[0];
-          if (remote && remote.data) {
-            store.set(KEY, JSON.stringify(remote.data));
-            S = loadState();
-            M = computeModel(S);
-            TODAY = clampToday();
-            render();
-          }
-        } catch (error) {
-          syncing = false;
-          toast("ดึงข้อมูลไม่ได้ ใช้ข้อมูลในเครื่องแทน");
-        }
-      }
-
-      const _commit = commit;
-      commit = function (re) {
-        _commit(re);
-        if (!syncing) cloudPush();
-      };
-      async function init() {
-        const th = store.get(TKEY);
-        if (th === "dark" || th === "light")
-          document.documentElement.dataset.theme = th;
-        render(); // วาดจากข้อมูลในเครื่องก่อน ไม่ต้องรอเน็ต
-        await cloudPull(); // แล้วค่อยดึงของจริงมาทับ
-
-        /* รับค่าจาก Shortcut */
         const q = new URLSearchParams(location.search);
         const tab = q.get("tab");
         if (tab && VIEWS[tab]) {
           ui.tab = tab;
           render();
         }
+
         const amt = toInt(q.get("add"));
         if (amt != null && amt > 0) {
           let d = q.get("date") || TODAY;
@@ -3318,24 +3128,9 @@
               baht(S.actuals[d])
           );
         }
+
         if (location.search) history.replaceState(null, "", location.pathname);
-      }
-      init();
-      async function addExpense(category, amount, note = "") {
-        amount = parseFloat(amount);
-        if (!amount || amount <= 0) {
-          toast("กรุณากรอกจำนวนเงินให้ถูกต้อง");
-          return;
-        }
-        const { error } = await sb
-          .from("expenses")
-          .insert([{ category: category, amount: amount, note: note }]);
-        if (error) {
-          toast("บันทึกไม่สำเร็จ: " + error.message);
-        } else {
-          toast("บันทึก " + category + " จำนวน " + amount + " บาท สำเร็จ");
-        }
-      }
+      })();
     </script>
   </body>
 </html>
