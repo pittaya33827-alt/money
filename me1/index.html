@@ -1011,8 +1011,8 @@ document.addEventListener('change',e=>{
   render();
 })();
 /* ========== ซิงก์กับ Supabase ========== */
-const SB_URL = 'https://zfmbstzdwzdwahjoxpkd.supabase.co';   // ← ใส่  Project URL
-const SB_KEY = 'sb_publishable_h22YnPRX1BExmjPho1E94w_JP74n_y0';                  // ← ใส่ anon public key
+const SB_URL = ' https://pittaya33827-alt.github.io/money/';   // ← ใส่  Project URL
+const SB_KEY = 'sb_publishable_DsS4gwRPQNPOOAYUb-02AA_Km8ZoU_K';                  // ← ใส่ anon public key
 const ROW_ID = '0956640980zaZX';              // ← ตั้งเองให้เดายาก ใช้ร่วมทุกเครื่อง
 
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
@@ -1044,8 +1044,7 @@ async function cloudPull(){
 /* ต่อท้าย commit เดิมให้ push ขึ้นคลาวด์อัตโนมัติ */
 const _commit = commit;
 commit = function(re){ _commit(re); if(!syncing) cloudPush(); };
-
-(async function init(){
+async function init(){
   const th = store.get(TKEY);
   if (th === 'dark' || th === 'light') document.documentElement.dataset.theme = th;
   render();                    // วาดจากข้อมูลในเครื่องก่อน ไม่ต้องรอเน็ต
@@ -1066,7 +1065,23 @@ commit = function(re){ _commit(re); if(!syncing) cloudPush(); };
     toast('บวกเพิ่ม ' + baht(amt) + ' วันที่ ' + dShort(d) + ' รวมเป็น ' + baht(S.actuals[d]));
   }
   if (location.search) history.replaceState(null, '', location.pathname);
-})();
+}
+init();
+async function addExpense(category, amount, note = '') {
+  amount = parseFloat(amount);
+  if (!amount || amount <= 0) {
+    toast('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+    return;
+  }
+  const { error } = await sb.from('expenses').insert([
+    { category: category, amount: amount, note: note }
+  ]);
+  if (error) {
+    toast('บันทึกไม่สำเร็จ: ' + error.message);
+  } else {
+    toast('บันทึก ' + category + ' จำนวน ' + amount + ' บาท สำเร็จ');
+  }
+}
 </script>
 </body>
 </html>
