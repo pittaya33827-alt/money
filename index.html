@@ -973,6 +973,7 @@
           },
         ],
         actuals: {},
+        notes: {},
         imported: [],
       });
 
@@ -999,6 +1000,8 @@
             debts: Array.isArray(s.debts) ? s.debts : d.debts,
             actuals:
               s.actuals && typeof s.actuals === "object" ? s.actuals : {},
+            notes:
+              s.notes && typeof s.notes === "object" ? s.notes : {},
             imported: Array.isArray(s.imported) ? s.imported : [],
           };
         } catch (e) {
@@ -2083,6 +2086,7 @@
         if (!ui.logMonth) ui.logMonth = TODAY.slice(0, 7);
         const day = M.byDate[ui.logDate];
         const cur = S.actuals[ui.logDate];
+        const noteText = S.notes && S.notes[ui.logDate] ? S.notes[ui.logDate] : "";
         const yest = addD(TODAY, -1);
         let h =
           '<div class="card"><div class="h2">บันทึกเงินที่ใช้จริง (กิน + น้ำมัน)</div>' +
@@ -2114,6 +2118,9 @@
           ")</span></div>" +
           '<div class="flex gap-2"><input id="logAmt" class="inp num" inputmode="numeric" placeholder="เช่น 85" value="" aria-label="จำนวนเงินที่ใช้เพิ่ม"><button class="btn soft" data-act="logFill" style="flex:none">เติมเท่ากับงบ</button></div>' +
           '<div id="logPrev" style="min-height:24px;margin-top:8px"></div>' +
+          '<label class="fld" style="margin-top:12px"><span class="tiny">รายละเอียดเพิ่มเติม (ถ้ามี)</span><textarea id="logNote" class="inp" rows="3" placeholder="เช่น ซื้อก๋วยเตี๋ยว / ค่ารถ / หมายเหตุ" aria-label="รายละเอียดเพิ่มเติม">' +
+          esc(noteText) +
+          "</textarea></label>" +
           '<button class="btn block" data-act="logSave">' +
           ic("check", 18) +
           "บวกเพิ่มยอดวันนี้</button>" +
@@ -2915,10 +2922,17 @@
             toast("กรอกจำนวนเงินที่ต้องการบวกเพิ่มก่อน");
             return;
           }
+          const note = $("#logNote") ? $("#logNote").value.trim() : "";
           const prev = S.actuals[ui.logDate] || 0;
           S.actuals[ui.logDate] = prev + addAmt;
+          if (note) {
+            S.notes[ui.logDate] = note;
+          } else if (S.notes[ui.logDate]) {
+            delete S.notes[ui.logDate];
+          }
           commit();
           $("#logAmt").value = "";
+          if ("#logNote" in globalThis && $("#logNote")) $("#logNote").value = "";
           toast(
             "บวกเพิ่มยอดวันที่ " +
               dShort(ui.logDate) +
